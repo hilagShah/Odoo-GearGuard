@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Equipment {
+  id             Int      @id @default(autoincrement())
+  name           String
+  serialNumber   String   @unique
+  purchaseDate   DateTime
+  warrantyEnd    DateTime
+  location       String
+  department     String
+  status         String   @default("Active") // Active, Scrap, Maintenance
+  teamId         Int?
+  Team           MaintenanceTeam? @relation(fields: [teamId], references: [id])
+  Requests       MaintenanceRequest[]
+}
+
+model MaintenanceTeam {
+  id        Int      @id @default(autoincrement())
+  name      String
+  type      String
+  Equipment Equipment[]
+  Users     User[]
+}
+
+model MaintenanceRequest {
+  id             Int      @id @default(autoincrement())
+  subject        String
+  description    String?
+  type           String   // Corrective, Preventive
+  status         String   @default("New") // New, In Progress, Repaired, Scrap
+  priority       String   @default("Medium")
+  equipmentId    Int
+  Equipment      Equipment @relation(fields: [equipmentId], references: [id])
+  technicianId   Int?
+  Technician     User?     @relation(fields: [technicianId], references: [id])
+  scheduledDate  DateTime?
+  duration       Int?      // In minutes
+  createdAt      DateTime  @default(now())
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique @default("temp@example.com") // Temporary default for migration
+  password  String   @default("password123") // Temporary default for migration
+  name      String
+  role      String   @default("Portal User") // Admin, Technician, Portal User
+  teamId    Int?
+  Team      MaintenanceTeam? @relation(fields: [teamId], references: [id])
+  Requests  MaintenanceRequest[]
+}
